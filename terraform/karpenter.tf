@@ -20,8 +20,8 @@ resource "helm_release" "karpenter" {
       }
 
       settings = {
-        clusterName     = module.eks.cluster_name
-        clusterEndpoint = module.eks.cluster_endpoint
+        clusterName       = module.eks.cluster_name
+        clusterEndpoint   = module.eks.cluster_endpoint
         interruptionQueue = ""
       }
     })
@@ -43,7 +43,7 @@ resource "kubernetes_manifest" "karpenter_node_class" {
     spec = {
       amiFamily = "AL2"
 
-      role = aws_iam_role.karpenter_node_role.name
+      instanceProfile = aws_iam_instance_profile.karpenter_node_instance_profile.name
 
       subnetSelectorTerms = [
         {
@@ -74,10 +74,15 @@ resource "kubernetes_manifest" "karpenter_amd64_spot" {
       name = "amd64-spot"
     }
     spec = {
+      disruption = {
+        consolidationPolicy = "WhenEmpty"
+        expireAfter         = "720h"
+      }
+
       template = {
         spec = {
           nodeClassRef = {
-            name = kubernetes_manifest.karpenter_node_class.manifest.metadata.name
+            name = "default-nodeclass"
           }
 
           requirements = [
@@ -94,6 +99,10 @@ resource "kubernetes_manifest" "karpenter_amd64_spot" {
           ]
         }
       }
+
+      limits = {
+        cpu = "1000"
+      }
     }
   }
 
@@ -108,10 +117,15 @@ resource "kubernetes_manifest" "karpenter_arm64_spot" {
       name = "arm64-spot"
     }
     spec = {
+      disruption = {
+        consolidationPolicy = "WhenEmpty"
+        expireAfter         = "720h"
+      }
+
       template = {
         spec = {
           nodeClassRef = {
-            name = kubernetes_manifest.karpenter_node_class.manifest.metadata.name
+            name = "default-nodeclass"
           }
 
           requirements = [
@@ -127,6 +141,10 @@ resource "kubernetes_manifest" "karpenter_arm64_spot" {
             }
           ]
         }
+      }
+
+      limits = {
+        cpu = "1000"
       }
     }
   }
