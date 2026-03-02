@@ -61,9 +61,9 @@ resource "aws_iam_policy" "karpenter_controller_policy" {
         Resource = "*"
       },
       {
-        Sid    = "AllowIAMPassRole"
-        Effect = "Allow"
-        Action = "iam:PassRole"
+        Sid      = "AllowIAMPassRole"
+        Effect   = "Allow"
+        Action   = "iam:PassRole"
         Resource = aws_iam_role.karpenter_node_role.arn
       }
     ]
