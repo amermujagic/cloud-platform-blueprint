@@ -92,6 +92,11 @@ resource "kubernetes_manifest" "karpenter_amd64_spot" {
               values   = ["amd64"]
             },
             {
+              key      = "node.kubernetes.io/instance-type"
+              operator = "In"
+              values   = ["m6i.large", "m7i.large", "c6i.large", "c7i.large"]
+            },
+            {
               key      = "karpenter.sh/capacity-type"
               operator = "In"
               values   = ["spot"]
@@ -133,6 +138,11 @@ resource "kubernetes_manifest" "karpenter_arm64_spot" {
               key      = "kubernetes.io/arch"
               operator = "In"
               values   = ["arm64"]
+            },
+            {
+              key      = "node.kubernetes.io/instance-type"
+              operator = "In"
+              values   = ["m6g.large", "m7g.large", "c6g.large", "c7g.large"]
             },
             {
               key      = "karpenter.sh/capacity-type"
