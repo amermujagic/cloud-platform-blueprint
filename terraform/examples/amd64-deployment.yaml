@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: amd64-demo
+  labels:
+    app: amd64-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: amd64-demo
+  template:
+    metadata:
+      labels:
+        app: amd64-demo
+    spec:
+      nodeSelector:
+        kubernetes.io/arch: amd64
+      containers:
+        - name: nginx
+          image: nginx:stable
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
