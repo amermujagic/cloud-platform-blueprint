@@ -32,3 +32,104 @@ resource "helm_release" "karpenter" {
     aws_iam_role_policy_attachment.karpenter_controller_attach
   ]
 }
+
+resource "kubernetes_manifest" "karpenter_node_class" {
+  manifest = {
+    apiVersion = "karpenter.k8s.aws/v1beta1"
+    kind       = "EC2NodeClass"
+    metadata = {
+      name = "default-nodeclass"
+    }
+    spec = {
+      amiFamily = "AL2"
+
+      role = aws_iam_role.karpenter_node_role.name
+
+      subnetSelectorTerms = [
+        {
+          tags = {
+            "karpenter.sh/discovery" = var.cluster_name
+          }
+        }
+      ]
+
+      securityGroupSelectorTerms = [
+        {
+          tags = {
+            "aws:eks:cluster-name" = var.cluster_name
+          }
+        }
+      ]
+    }
+  }
+
+  depends_on = [helm_release.karpenter]
+}
+
+resource "kubernetes_manifest" "karpenter_amd64_spot" {
+  manifest = {
+    apiVersion = "karpenter.sh/v1beta1"
+    kind       = "NodePool"
+    metadata = {
+      name = "amd64-spot"
+    }
+    spec = {
+      template = {
+        spec = {
+          nodeClassRef = {
+            name = kubernetes_manifest.karpenter_node_class.manifest.metadata.name
+          }
+
+          requirements = [
+            {
+              key      = "kubernetes.io/arch"
+              operator = "In"
+              values   = ["amd64"]
+            },
+            {
+              key      = "karpenter.sh/capacity-type"
+              operator = "In"
+              values   = ["spot"]
+            }
+          ]
+        }
+      }
+    }
+  }
+
+  depends_on = [kubernetes_manifest.karpenter_node_class]
+}
+
+resource "kubernetes_manifest" "karpenter_arm64_spot" {
+  manifest = {
+    apiVersion = "karpenter.sh/v1beta1"
+    kind       = "NodePool"
+    metadata = {
+      name = "arm64-spot"
+    }
+    spec = {
+      template = {
+        spec = {
+          nodeClassRef = {
+            name = kubernetes_manifest.karpenter_node_class.manifest.metadata.name
+          }
+
+          requirements = [
+            {
+              key      = "kubernetes.io/arch"
+              operator = "In"
+              values   = ["arm64"]
+            },
+            {
+              key      = "karpenter.sh/capacity-type"
+              operator = "In"
+              values   = ["spot"]
+            }
+          ]
+        }
+      }
+    }
+  }
+
+  depends_on = [kubernetes_manifest.karpenter_node_class]
+}
